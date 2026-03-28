@@ -1,8 +1,8 @@
 # STATE.md - Health Triage Assistant
 
-**Current Phase:** Phase 4: REST API
+**Current Phase:** Phase 5: Agentic AI
 
-**Phase Goal:** JWT authentication, Patient CRUD, Symptom submission, Prediction endpoint.
+**Phase Goal:** LangChain agent with Gemini 2.5 Flash, custom tools, WebSocket streaming via Django Channels.
 
 ## Completed Phases
 
@@ -43,34 +43,51 @@
 
 **Tasks:** All completed
 
+### Phase 4: REST API ✓
+
+**Completed:** 2026-03-28
+
+**Success Criteria:**
+1. ✓ User can register/login via API
+2. ✓ JWT token returned and validated
+3. ✓ Patient CRUD endpoints work
+4. ✓ Symptom submission returns ML prediction
+
+**Tasks:** All completed
+
 ## Active Phase
 
-**Phase 4: REST API**
+**Phase 5: Agentic AI**
 
 ### Requirements
-- AUTH-01: User can register with email and password
-- AUTH-02: User can login with JWT token
-- AUTH-03: User session persists across page refresh
-- PAT-01: User can create patient profile
-- PAT-02: User can view and edit patient profile
-- PAT-03: User can view patient history
-- SYM-02: System returns ML-based symptom classification
+- AGT-01: Agent handles natural conversation about symptoms
+- AGT-02: Agent selects and calls tools (ML classifier, history retriever, predictor, report generator, escalation alert)
+- AGT-03: Agent responses stream in real-time via WebSocket
+- AGT-04: Agent maintains conversation memory across session
+- AGT-05: Agent generates structured triage reports
+- AGT-06: Agent triggers escalation alerts for high-priority cases
 
 ### Success Criteria
-1. User can register/login via API
-2. JWT token returned and validated
-3. Patient CRUD endpoints work
-4. Symptom submission returns ML prediction
+1. LangChain agent with Gemini 2.5 Flash configured
+2. Custom tools defined (ML classifier, history retriever, predictor, report generator, escalation)
+3. WebSocket consumer for real-time chat
+4. Streaming responses to frontend
+5. Conversation memory persisted
 
 ### Tasks
-- [ ] Setup JWT authentication (djangorestframework-simplejwt)
-- [ ] Create User registration endpoint
-- [ ] Create Login endpoint
-- [ ] Create Patient CRUD endpoints (list, retrieve, update)
-- [ ] Create Symptom submission endpoint
-- [ ] Create Prediction endpoint (loads ML model, returns disease + confidence)
-- [ ] Add permission classes
-- [ ] Add request/response serializers
+- [ ] Setup LangChain with Google Generative AI (Gemini 2.5 Flash)
+- [ ] Configure Gemini API key, enable streaming
+- [ ] Define Tool 1: Symptom classifier (calls ML model)
+- [ ] Define Tool 2: History retriever (queries DB)
+- [ ] Define Tool 3: Predictor (disease + triage level)
+- [ ] Define Tool 4: Report generator (structured output)
+- [ ] Define Tool 5: Escalation alert (high-priority trigger)
+- [ ] Implement agent tool selection loop
+- [ ] Implement conversation memory (chat history)
+- [ ] Setup Django Channels for WebSocket
+- [ ] Create WebSocket consumer for chat
+- [ ] Enable streaming responses to frontend
+- [ ] Add structured output parsing
 
 ## Project Reference
 
@@ -78,7 +95,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Accurate, low-latency symptom assessment that guides patients to the right level of care — combining ML predictions with conversational AI for trusted health guidance.
 
-**Current focus:** Phase 4: REST API
+**Current focus:** Phase 5: Agentic AI
 
 ---
-*Last updated: 2026-03-28 after Phase 3 completion*
+*Last updated: 2026-03-28 after Phase 4 completion*
