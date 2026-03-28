@@ -1,0 +1,33 @@
+# Backend environment
+backend/.env
+backend/.env.local
+
+# Frontend environment
+frontend/.env
+frontend/.env.local
+
+# Docker
+docker/docker-compose.override.yml
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# ML artifacts
+backend/models/
+backend/*.joblib
+backend/*.pkl
+
+# Static files
+backend/staticfiles/
+
+# Database
+backend/db.sqlite3

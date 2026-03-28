@@ -1,0 +1,45 @@
+# Core Django
+Django==5.0.6
+djangorestframework==3.15.1
+djangorestframework-simplejwt==5.3.1
+
+# Django Channels (WebSocket)
+channels[daphne]==4.1.0
+channels-redis==4.2.0
+
+# Database
+psycopg2-binary==2.9.9
+
+# Celery (Async Tasks)
+celery==5.4.0
+redis==5.0.4
+
+# ML & Data
+scikit-learn==1.5.0
+xgboost==2.1.0
+pandas==2.2.2
+numpy==1.26.4
+joblib==1.4.2
+scipy==1.13.1
+
+# NLP
+spacy==3.7.5
+
+# LLM / Agent
+langchain==0.2.5
+langchain-core==0.2.9
+langchain-community==0.2.5
+google-generativeai==0.6.0
+
+# Utilities
+python-decouple==3.8
+django-cors-headers==4.4.0
+drf-spectacular==0.27.2
+structlog==24.2.0
+Pillow==10.3.0
+
+# Reporting
+reportlab==4.2.0
+
+# Email
+django-anymail==11.0.1
