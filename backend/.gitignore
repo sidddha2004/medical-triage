@@ -49,10 +49,9 @@ Thumbs.db
 .env
 .env.local
 
-# ML models
-*.joblib
-*.pkl
-models/
+# ML models (tracked in version control)
+# models/*.joblib
+# models/*.pkl
 
 # Logs
 logs/
