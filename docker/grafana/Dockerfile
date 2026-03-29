@@ -7,7 +7,6 @@ USER grafana
 
 # Copy provisioning
 COPY provisioning/ /etc/grafana/provisioning/
-COPY dashboards/ /etc/grafana/provisioning/dashboards/
 
 # Environment variables
 ENV GF_SECURITY_ADMIN_USER=admin

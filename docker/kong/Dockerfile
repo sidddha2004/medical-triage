@@ -1,4 +1,4 @@
-FROM kong:3.5-alpine
+FROM kong:3-alpine
 
 # Copy declarative configuration
 COPY kong.yml /kong/kong.yml

@@ -17,8 +17,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN mkdir -p /mlflow/artifacts /mlflow/data
 
 # Expose MLflow ports
-EXPOSE 5000  # MLflow UI
-EXPOSE 5001  # Artifact proxy
+EXPOSE 5000
+EXPOSE 5001
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s \

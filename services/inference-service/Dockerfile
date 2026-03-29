@@ -19,8 +19,8 @@ COPY . .
 COPY ../backend/ml_pipeline/models ./models
 
 # Expose ports
-EXPOSE 8004  # HTTP API
-EXPOSE 50053  # gRPC
+EXPOSE 8004
+EXPOSE 50053
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s \
