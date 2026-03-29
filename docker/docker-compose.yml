@@ -67,6 +67,7 @@ services:
     volumes:
       - ../backend:/app
     environment:
+      - DJANGO_SETTINGS_MODULE=backend.settings
       - DB_NAME=medical_triage
       - DB_USER=postgres
       - DB_PASSWORD=postgres
@@ -84,12 +85,64 @@ services:
     build:
       context: ../frontend
       dockerfile: ../docker/Dockerfile.frontend
+      args:
+        - VITE_API_URL=http://localhost:8000/api
     container_name: medical_triage_frontend
     ports:
       - "80:80"
     depends_on:
       - backend
 
+  # MLflow Tracking Server
+  mlflow:
+    build:
+      context: ./mlflow
+      dockerfile: Dockerfile
+    container_name: medical_triage_mlflow
+    ports:
+      - "5000:5000"
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    volumes:
+      - mlflow_data:/mlflow
+      - ../backend/ml_pipeline/models:/app/models
+    depends_on:
+      - postgres
+    networks:
+      - medical_triage_network
+    restart: unless-stopped
+
+  # Inference Service (FastAPI + gRPC)
+  inference-service:
+    build:
+      context: ../services/inference-service
+      dockerfile: Dockerfile
+    container_name: medical_triage_inference
+    ports:
+      - "8004:8004"
+      - "50053:50053"
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - AB_TEST_ENABLED=true
+      - AB_TEST_CHAMPION_VERSION=v1.0
+      - AB_TEST_CHALLENGER_VERSION=v2.0
+      - AB_TEST_CHALLENGER_TRAFFIC=10
+    volumes:
+      - ../backend/ml_pipeline/models:/app/models
+    depends_on:
+      - mlflow
+      - redis
+    networks:
+      - medical_triage_network
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   redis_data:
+  mlflow_data:
+
+networks:
+  medical_triage_network:
+    driver: bridge

@@ -256,37 +256,48 @@ Triage levels:
 
 Always include a medical disclaimer in your final report."""
 
-        # Create the ReAct agent
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", system_prompt),
-            MessagesPlaceholder(variable_name="messages"),
-            MessagesPlaceholder(variable_name="agent_scratchpad"),
-        ])
-
+        # Create the ReAct agent - use state_graph format for langgraph
+        # The create_react_agent expects specific input format
+        from functools import partial
         self.agent = create_react_agent(
             model=self.llm,
             tools=tools,
-            prompt=prompt,
+            state_schema=None,  # Use default state schema
         )
+
+        # Store system prompt for adding to messages
+        self.system_prompt = system_prompt
 
         self._initialized = True
 
-    def chat(self, message: str, session_id: Optional[int] = None) -> str:
+    def chat(self, message: str, session_id: Optional[int] = None, conversation_history: Optional[List[Dict]] = None) -> str:
         """
         Process a chat message and return the agent's response.
 
         Args:
             message: User's message
             session_id: Optional session ID for context
+            conversation_history: List of past messages [{'role': 'user'/'agent', 'content': '...'}]
 
         Returns:
-            Agent's response
+            Agent's response as plain text
         """
         if not self._initialized:
             self.initialize()
 
-        # Build conversation context
-        messages = [HumanMessage(content=message)]
+        # Build conversation context with system prompt
+        messages = [SystemMessage(content=self.system_prompt)]
+
+        # Add conversation history if available
+        if conversation_history:
+            for msg in conversation_history[-10:]:  # Last 10 messages for context
+                if msg['role'] == 'user':
+                    messages.append(HumanMessage(content=msg['content']))
+                elif msg['role'] == 'agent':
+                    messages.append(AIMessage(content=msg['content']))
+
+        # Add current message
+        messages.append(HumanMessage(content=message))
 
         # Invoke the agent
         response = self.agent.invoke({"messages": messages})
@@ -294,7 +305,22 @@ Always include a medical disclaimer in your final report."""
         # Extract the response
         if "messages" in response:
             last_message = response["messages"][-1]
-            return last_message.content
+            content = last_message.content
+
+            # Handle Gemini's complex content format (list of dicts with type/extras/signature)
+            if isinstance(content, list):
+                text_parts = []
+                for item in content:
+                    if isinstance(item, dict):
+                        # Extract 'text' field from Gemini response format
+                        if 'text' in item:
+                            text_parts.append(item['text'])
+                        elif 'content' in item:
+                            text_parts.append(item['content'])
+                    elif isinstance(item, str):
+                        text_parts.append(item)
+                return ' '.join(text_parts) if text_parts else str(content)
+            return content
 
         return "I apologize, but I couldn't process your request. Please try again."
 

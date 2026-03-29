@@ -47,4 +47,4 @@ reportlab>=4.2
 django-anymail>=11.0
 
 # PostgreSQL (production only)
-# psycopg2-binary>=2.9
+psycopg2-binary>=2.9

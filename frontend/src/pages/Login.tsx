@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
-import api from '../lib/api'
+import { authAPI } from '../lib/api'
 
 export default function Login() {
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -19,22 +20,33 @@ export default function Login() {
     setLoading(true)
 
     try {
-      const endpoint = isLogin ? '/auth/login/' : '/auth/register/'
-      const response = await api.post(endpoint, { email, password })
-
       if (isLogin) {
+        // Login
+        const response = await authAPI.login(email, password)
         login(response.data.access, response.data.refresh, {
-          id: response.data.user?.id || '1',
+          id: response.data.user?.id?.toString() || '1',
           email: response.data.user?.email || email,
         })
-        navigate('/')
+        navigate('/dashboard')
       } else {
+        // Register
+        if (password !== confirmPassword) {
+          setError('Passwords do not match')
+          setLoading(false)
+          return
+        }
+        await authAPI.register(email, password, password)
         setIsLogin(true)
         setError('Registration successful! Please login.')
       }
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { detail?: string } } }
-      setError(error.response?.data?.detail || 'An error occurred')
+      const error = err as { response?: { data?: { detail?: string; password?: string[]; email?: string[] } } }
+      const errorMsg =
+        error.response?.data?.detail ||
+        error.response?.data?.password?.[0] ||
+        error.response?.data?.email?.[0] ||
+        'An error occurred'
+      setError(errorMsg)
     } finally {
       setLoading(false)
     }
@@ -79,12 +91,30 @@ export default function Login() {
                 type="password"
                 autoComplete="current-password"
                 required
-                className="input-field rounded-t-none"
+                className="input-field"
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
+            {!isLogin && (
+              <div>
+                <label htmlFor="confirmPassword" className="sr-only">
+                  Confirm Password
+                </label>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  className="input-field rounded-t-none"
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+              </div>
+            )}
           </div>
 
           {error && (

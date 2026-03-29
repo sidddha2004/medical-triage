@@ -2,6 +2,10 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+# Default API URL - can be overridden via build arg in docker-compose.yml
+ARG VITE_API_URL=http://localhost:8000/api
+ENV VITE_API_URL=${VITE_API_URL}
+
 COPY package*.json ./
 
 RUN npm ci

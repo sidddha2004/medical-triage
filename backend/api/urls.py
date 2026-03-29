@@ -10,7 +10,7 @@ router.register(r'predictions', PredictionViewSet, basename='prediction')
 router.register(r'symptom-assessment', SymptomAssessmentViewSet, basename='symptom-assessment')
 
 urlpatterns = [
-    path('register/', RegisterView.as_view(), name='register'),
-    path('login/', LoginView.as_view(), name='login'),
+    path('auth/register/', RegisterView.as_view(), name='register'),
+    path('auth/login/', LoginView.as_view(), name='login'),
     path('', include(router.urls)),
 ]

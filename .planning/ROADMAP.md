@@ -7,16 +7,27 @@
 
 ## Phase Overview
 
-| # | Phase | Goal | Requirements | Success Criteria |
-|---|-------|------|--------------|------------------|
-| 1 | Project Setup | Monorepo structure, Django + React skeleton, PostgreSQL + Redis configured | — | Repositories initialized, dev servers run |
-| 2 | Database + Models | Patient, TriageSession, Prediction, AgentMessage models | — | Models defined, migrations run, admin configured |
-| 3 | ML Model Pipeline | XGBoost classifier trained on dataset, served via API | — | Model trained (F1 > 0.8), predictions via API |
-| 4 | REST API | JWT auth, Patient CRUD, Symptom submission, Prediction endpoint | AUTH-01, AUTH-02, AUTH-03, PAT-01, PAT-02, PAT-03, SYM-02 | API endpoints functional, authenticated |
-| 5 | Agentic AI | LangChain agent with Gemini 2.5 Flash, tools, WebSocket streaming | AGT-01, AGT-02, AGT-03, AGT-04, AGT-05, AGT-06 | Agent handles conversation, calls tools, streams |
-| 6 | Frontend Dashboard | Login, Dashboard, Chat UI, Results + History | DSH-01, DSH-02, DSH-03, SYM-01, SYM-03 | User can login, chat, view results |
-| 7 | Async Tasks | Celery + Redis, email alerts, PDF generation, cleanup | TSK-01, TSK-02, TSK-03 | Tasks queued + executed, emails sent |
-| 8 | Testing + Polish | Full flow testing, error handling, logging | All | End-to-end flow works |
+### v1.0 - Core Application (Complete)
+
+| # | Phase | Goal | Requirements | Success Criteria | Status |
+|---|-------|------|--------------|------------------|--------|
+| 1 | Project Setup | Monorepo structure, Django + React skeleton, PostgreSQL + Redis configured | — | Repositories initialized, dev servers run | ✅ |
+| 2 | Database + Models | Patient, TriageSession, Prediction, AgentMessage models | — | Models defined, migrations run, admin configured | ✅ |
+| 3 | ML Model Pipeline | XGBoost classifier trained on dataset, served via API | — | Model trained (F1 > 0.8), predictions via API | ✅ |
+| 4 | REST API | JWT auth, Patient CRUD, Symptom submission, Prediction endpoint | AUTH-01, AUTH-02, AUTH-03, PAT-01, PAT-02, PAT-03, SYM-02 | API endpoints functional, authenticated | ✅ |
+| 5 | Agentic AI | LangChain agent with Gemini 2.5 Flash, tools, WebSocket streaming | AGT-01, AGT-02, AGT-03, AGT-04, AGT-05, AGT-06 | Agent handles conversation, calls tools, streams | ✅ |
+| 6 | Frontend Dashboard | Login, Dashboard, Chat UI, Results + History | DSH-01, DSH-02, DSH-03, SYM-01, SYM-03 | User can login, chat, view results | ✅ |
+
+### v2.0 - Distributed ML Scale (In Progress)
+
+| # | Phase | Goal | Plan | Success Criteria | Status |
+|---|-------|------|------|------------------|--------|
+| 7 | API Gateway | Kong/Nginx gateway, rate limiting, routing | [Plan 1](../docs/superpowers/plans/2026-03-29-plan-1-api-gateway.md) | Rate limiting works, 429 after threshold | 📋 |
+| 8 | Service Decomposition | Split monolith into 5 microservices with gRPC | [Plan 2](../docs/superpowers/plans/2026-03-29-plan-2-service-decomposition.md) | Services communicate via gRPC | 📋 |
+| 9 | Kafka Integration | Event-driven architecture with Kafka | [Plan 3](../docs/superpowers/plans/2026-03-29-plan-3-kafka-integration.md) | Events published/consumed successfully | 📋 |
+| 10 | Inference Service + MLflow | Production ML with model registry, A/B testing | [Plan 4](../docs/superpowers/plans/2026-03-29-plan-4-inference-mlflow.md) | MLflow UI working, A/B routing functional | 📋 |
+| 11 | Observability | Prometheus, Grafana, ELK, Jaeger | [Plan 5](../docs/superpowers/plans/2026-03-29-plan-5-observability.md) | Dashboards showing metrics, traces in Jaeger | 📋 |
+| 12 | Kubernetes Deployment | K8s deployment with HPA, auto-scaling | [Plan 6](../docs/superpowers/plans/2026-03-29-plan-6-kubernetes-deployment.md) | All pods running, HPA scaling | 📋 |
 
 ---
 

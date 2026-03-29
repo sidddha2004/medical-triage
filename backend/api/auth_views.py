@@ -43,6 +43,7 @@ class RegisterView(generics.CreateAPIView):
     """User registration endpoint."""
 
     serializer_class = RegisterSerializer
+    permission_classes = []  # Allow unauthenticated access to register
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -62,6 +63,7 @@ class LoginView(generics.GenericAPIView):
     """User login endpoint - returns JWT tokens."""
 
     serializer_class = LoginSerializer
+    permission_classes = []  # Allow unauthenticated access to login
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
