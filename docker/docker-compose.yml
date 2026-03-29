@@ -285,84 +285,86 @@ services:
 
   # ===========================================
   # gRPC Microservices (Plan 2: Service Decomposition)
+  # NOTE: These services require Django core models and additional setup
+  # To enable: copy backend/core to each service directory and uncomment
   # ===========================================
 
-  # Auth Service (gRPC)
-  auth-service:
-    build:
-      context: ../services/auth-service
-      dockerfile: Dockerfile
-    container_name: medical_triage_auth
-    ports:
-      - "50051:50051"
-    environment:
-      - DB_NAME=medical_triage
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
-      - DB_HOST=postgres
-      - SECRET_KEY=django-insecure-auth-service-key
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - medical_triage_network
-    restart: unless-stopped
+  # # Auth Service (gRPC)
+  # auth-service:
+  #   build:
+  #     context: ../services/auth-service
+  #     dockerfile: Dockerfile
+  #   container_name: medical_triage_auth
+  #   ports:
+  #     - "50051:50051"
+  #   environment:
+  #     - DB_NAME=medical_triage
+  #     - DB_USER=postgres
+  #     - DB_PASSWORD=postgres
+  #     - DB_HOST=postgres
+  #     - SECRET_KEY=django-insecure-auth-service-key
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   networks:
+  #     - medical_triage_network
+  #   restart: unless-stopped
 
-  # Patient Service (gRPC)
-  patient-service:
-    build:
-      context: ../services/patient-service
-      dockerfile: Dockerfile
-    container_name: medical_triage_patient
-    ports:
-      - "50052:50052"
-    environment:
-      - DB_NAME=medical_triage
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
-      - DB_HOST=postgres
-      - SECRET_KEY=django-insecure-patient-service-key
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - medical_triage_network
-    restart: unless-stopped
+  # # Patient Service (gRPC) - requires backend/core/models
+  # patient-service:
+  #   build:
+  #     context: ../services/patient-service
+  #     dockerfile: Dockerfile
+  #   container_name: medical_triage_patient
+  #   ports:
+  #     - "50052:50052"
+  #   environment:
+  #     - DB_NAME=medical_triage
+  #     - DB_USER=postgres
+  #     - DB_PASSWORD=postgres
+  #     - DB_HOST=postgres
+  #     - SECRET_KEY=django-insecure-patient-service-key
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   networks:
+  #     - medical_triage_network
+  #   restart: unless-stopped
 
-  # Triage Service (gRPC)
-  triage-service:
-    build:
-      context: ../services/triage-service
-      dockerfile: Dockerfile
-    container_name: medical_triage_triage
-    ports:
-      - "50054:50054"
-    environment:
-      - DB_NAME=medical_triage
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
-      - DB_HOST=postgres
-      - SECRET_KEY=django-insecure-triage-service-key
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - medical_triage_network
-    restart: unless-stopped
+  # # Triage Service (gRPC) - requires backend/core/models
+  # triage-service:
+  #   build:
+  #     context: ../services/triage-service
+  #     dockerfile: Dockerfile
+  #   container_name: medical_triage_triage
+  #   ports:
+  #     - "50054:50054"
+  #   environment:
+  #     - DB_NAME=medical_triage
+  #     - DB_USER=postgres
+  #     - DB_PASSWORD=postgres
+  #     - DB_HOST=postgres
+  #     - SECRET_KEY=django-insecure-triage-service-key
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   networks:
+  #     - medical_triage_network
+  #   restart: unless-stopped
 
-  # Agent Service (gRPC)
-  agent-service:
-    build:
-      context: ../services/agent-service
-      dockerfile: Dockerfile
-    container_name: medical_triage_agent
-    ports:
-      - "50055:50055"
-    environment:
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
-    networks:
-      - medical_triage_network
-    restart: unless-stopped
+  # # Agent Service (gRPC)
+  # agent-service:
+  #   build:
+  #     context: ../services/agent-service
+  #     dockerfile: Dockerfile
+  #   container_name: medical_triage_agent
+  #   ports:
+  #     - "50055:50055"
+  #   environment:
+  #     - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+  #   networks:
+  #     - medical_triage_network
+  #   restart: unless-stopped
 
 volumes:
   postgres_data:
