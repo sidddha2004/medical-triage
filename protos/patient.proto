@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package patient;
+
+service PatientService {
+  rpc GetPatient (GetPatientRequest) returns (PatientResponse);
+  rpc CreatePatient (CreatePatientRequest) returns (PatientResponse);
+  rpc UpdatePatient (UpdatePatientRequest) returns (PatientResponse);
+  rpc GetPatientHistory (GetHistoryRequest) returns (HistoryResponse);
+}
+
+message GetPatientRequest {
+  int32 user_id = 1;
+}
+
+message CreatePatientRequest {
+  int32 user_id = 2;
+  string date_of_birth = 3;
+  string gender = 4;
+  string blood_type = 5;
+}
+
+message UpdatePatientRequest {
+  int32 patient_id = 1;
+  string date_of_birth = 2;
+  string gender = 3;
+  string blood_type = 4;
+}
+
+message PatientResponse {
+  bool success = 1;
+  int32 patient_id = 2;
+  int32 user_id = 3;
+  string email = 4;
+  string date_of_birth = 5;
+  string gender = 6;
+  string blood_type = 7;
+  string created_at = 8;
+  string error = 9;
+}
+
+message GetHistoryRequest {
+  int32 patient_id = 1;
+  int32 limit = 2;
+}
+
+message HistoryEntry {
+  int32 session_id = 1;
+  string started_at = 2;
+  string status = 3;
+  string triage_level = 4;
+  repeated string symptoms = 5;
+  string disease = 6;
+  float confidence = 7;
+}
+
+message HistoryResponse {
+  bool success = 1;
+  repeated HistoryEntry entries = 2;
+  string error = 3;
+}

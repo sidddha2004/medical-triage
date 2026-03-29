@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package inference;
+
+service InferenceService {
+  rpc Predict (PredictRequest) returns (PredictResponse);
+  rpc BatchPredict (BatchPredictRequest) returns (BatchPredictResponse);
+  rpc GetModelStatus (ModelStatusRequest) returns (ModelStatusResponse);
+}
+
+message PredictRequest {
+  repeated string symptoms = 1;
+  string model_version = 2;
+}
+
+message PredictResponse {
+  bool success = 1;
+  string disease = 2;
+  float confidence = 3;
+  repeated string matched_symptoms = 4;
+  repeated string precautions = 5;
+  string model_version = 6;
+  float latency_ms = 7;
+  bool cache_hit = 8;
+  string error = 9;
+}
+
+message BatchPredictRequest {
+  repeated PredictRequest requests = 1;
+}
+
+message BatchPredictResponse {
+  bool success = 1;
+  repeated PredictResponse predictions = 2;
+  string error = 3;
+}
+
+message ModelStatusRequest {}
+
+message ModelStatusResponse {
+  bool loaded = 1;
+  string model_version = 2;
+  int32 total_diseases = 3;
+  int32 total_symptoms = 4;
+  string last_trained = 5;
+  string error = 6;
+}

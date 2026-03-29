@@ -1,0 +1,80 @@
+# Default values for medical-triage
+# This is a YAML-formatted file.
+
+# Global configuration
+global:
+  registry: medical-triage
+  imagePullPolicy: Always
+  storageClass: ""
+
+# Replica counts
+replicas:
+  backend: 3
+  inference: 2
+  auth: 2
+  patient: 2
+  kong: 2
+
+# Resource limits
+resources:
+  backend:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+  inference:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "2000m"
+
+# Database configuration
+postgresql:
+  enabled: true
+  storage: 10Gi
+
+# Redis configuration
+redis:
+  enabled: true
+  storage: 5Gi
+
+# Kafka configuration
+kafka:
+  enabled: true
+  storage: 20Gi
+
+# MLflow configuration
+mlflow:
+  enabled: true
+  storage: 20Gi
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: nginx
+  host: api.medical-triage.local
+
+# Monitoring configuration
+monitoring:
+  prometheus:
+    enabled: true
+    retention: 15d
+  grafana:
+    enabled: true
+    adminPassword: "admin-password-change-me"
+  jaeger:
+    enabled: true
+  loki:
+    enabled: true
+
+# Security configuration
+secrets:
+  # Generate a strong secret key for production
+  djangoSecretKey: "change-me-in-production"
+  dbPassword: "postgres-secret-password"
+  jwtSecret: "jwt-secret-change-me"
+  googleApiKey: ""

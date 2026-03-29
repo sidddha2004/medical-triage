@@ -1,0 +1,32 @@
+# ConfigMap for application configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: medical-triage
+data:
+  # Database configuration
+  DB_NAME: "medical_triage"
+  DB_PORT: "5432"
+
+  # Redis configuration
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  REDIS_URL: "redis://redis:6379/0"
+
+  # MLflow configuration
+  MLFLOW_TRACKING_URI: "http://mlflow:5000"
+
+  # Feature flags
+  DEBUG: "false"
+  LOG_LEVEL: "INFO"
+
+  # Kafka configuration
+  KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+
+  # Service URLs
+  AUTH_SERVICE_URL: "auth-service:50051"
+  PATIENT_SERVICE_URL: "patient-service:50052"
+  TRIAGE_SERVICE_URL: "triage-service:50054"
+  INFERENCE_SERVICE_URL: "inference-service:50053"
+  AGENT_SERVICE_URL: "agent-service:50055"

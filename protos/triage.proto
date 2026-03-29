@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package triage;
+
+service TriageService {
+  rpc CreateSession (CreateSessionRequest) returns (SessionResponse);
+  rpc GetSession (GetSessionRequest) returns (SessionResponse);
+  rpc UpdateSession (UpdateSessionRequest) returns (SessionResponse);
+  rpc EndSession (EndSessionRequest) returns (SessionResponse);
+  rpc SaveMessage (SaveMessageRequest) returns (MessageResponse);
+  rpc GetMessages (GetMessagesRequest) returns (MessagesResponse);
+}
+
+message CreateSessionRequest {
+  int32 patient_id = 1;
+  repeated string symptoms = 2;
+  string notes = 3;
+}
+
+message GetSessionRequest {
+  int32 session_id = 1;
+}
+
+message UpdateSessionRequest {
+  int32 session_id = 1;
+  string status = 2;
+  string triage_level = 3;
+}
+
+message EndSessionRequest {
+  int32 session_id = 1;
+}
+
+message SessionResponse {
+  bool success = 1;
+  int32 session_id = 2;
+  int32 patient_id = 3;
+  string started_at = 4;
+  string ended_at = 5;
+  string status = 6;
+  string triage_level = 7;
+  repeated string symptoms = 8;
+  string error = 9;
+}
+
+message SaveMessageRequest {
+  int32 session_id = 1;
+  string role = 2;
+  string content = 3;
+}
+
+message MessageResponse {
+  bool success = 1;
+  int32 message_id = 2;
+  string error = 3;
+}
+
+message GetMessagesRequest {
+  int32 session_id = 1;
+  int32 limit = 2;
+}
+
+message Message {
+  string role = 1;
+  string content = 2;
+  string timestamp = 3;
+}
+
+message MessagesResponse {
+  bool success = 1;
+  repeated Message messages = 2;
+  string error = 3;
+}
