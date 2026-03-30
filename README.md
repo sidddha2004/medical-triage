@@ -337,20 +337,18 @@ medical-triage/
 ## 📊 Screenshots
 
 ### Login Page
-![Login](images/image.png)
+![Login](images/image-4.png)
 
 ### Dashboard
-![Dashboard](images/image-1.png)
+![Dashboard](images/image.png)
 
 ### AI Chat
+![Chat](images/image-1.png)
 ![Chat](images/image-2.png)
-![Chat](images/image-3.png)
 
 ### Health History
-![History](images/image-4.png)
+![History](images/image-3.png)
 
-### MLflow UI
-![MLflow](images/image-5.png)
 
 
 ---
