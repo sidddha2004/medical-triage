@@ -30,11 +30,10 @@ An AI-powered health triage system that combines machine learning with conversat
 |---------|-------------|
 | **🚀 Real-time WebSocket** | Django Channels for streaming AI responses |
 | **📡 RESTful API** | Fully documented REST API with Swagger/OpenAPI specs |
-| **🤖 LangChain Agent** | Custom AI agent with 5 specialized tools (symptom classifier, history retriever, triage recommender, report generator, escalation alert) |
+| **🤖 LangChain Agent** | Custom AI agent with specialized tools (symptom classifier, history retriever, triage recommender, report generator, escalation alert) |
 | **📈 MLflow Integration** | Model registry, experiment tracking, and A/B testing |
-| **🔭 Observability** | Prometheus metrics, Grafana dashboards, ELK logging, Jaeger distributed tracing |
+| **🔭 Observability** | Prometheus metrics, Grafana dashboards, Loki logging, Jaeger distributed tracing |
 | **🐳 Docker Ready** | Full Docker Compose setup for local development |
-| **☸️ Kubernetes Ready** | Production deployment manifests with HPA auto-scaling |
 
 ---
 
@@ -51,30 +50,30 @@ An AI-powered health triage system that combines machine learning with conversat
           │                │                │
           ▼                ▼                ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│                      API GATEWAY (Kong/Nginx)                       │
-│         Rate Limiting │ JWT Auth │ Request Routing │ Caching       │
+│                      NGINX REVERSE PROXY                            │
+│         Static Files │ API Proxy │ WebSocket Upgrade               │
 └─────────────────────────────────────────────────────────────────────┘
           │
           ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│                        SERVICE LAYER                                │
+│                      DJANGO MONOLITH                                │
 │  ┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐    │
-│  │   Auth Service   │ │  Triage Service  │ │  Patient Service │    │
-│  │   (JWT + OAuth)  │ │  (REST + WS)     │ │   (CRUD + Hist)  │    │
+│  │   REST API       │ │  WebSocket API   │ │  Celery Worker   │    │
+│  │   (DRF)          │ │  (Channels)      │ │  (Async Tasks)   │    │
 │  └──────────────────┘ └──────────────────┘ └──────────────────┘    │
 │  ┌──────────────────┐ ┌──────────────────┐                         │
-│  │ Inference Svc    │ │   Agent Service  │                         │
-│  │  (ML Model API)  │ │ (LangChain+LCEL) │                         │
+│  │ ML Pipeline      │ │   LangChain      │                         │
+│  │  (XGBoost)       │ │   Agent          │                         │
 │  └──────────────────┘ └──────────────────┘                         │
 └─────────────────────────────────────────────────────────────────────┘
           │
           ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                       DATA LAYER                                    │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌────────────┐ │
-│  │ PostgreSQL  │  │    Redis    │  │   MLflow    │  │   Kafka    │ │
-│  │ (Primary DB)│  │ (Cache+MQ)  │  │(Model Reg)  │  │  (Events)  │ │
-│  └─────────────┘  └─────────────┘  └─────────────┘  └────────────┘ │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                 │
+│  │ PostgreSQL  │  │    Redis    │  │   MLflow    │                 │
+│  │ (Primary DB)│  │ (Cache+MQ)  │  │(Model Reg)  │                 │
+│  └─────────────┘  └─────────────┘  └─────────────┘                 │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -103,7 +102,9 @@ docker-compose up -d
 # Backend API: http://localhost:8000
 # API Docs: http://localhost:8000/api/docs/
 # MLflow UI: http://localhost:5000
-# Kafka UI: http://localhost:8090
+# Grafana: http://localhost:3000
+# Prometheus: http://localhost:9090
+# Jaeger: http://localhost:16686
 ```
 
 ### Option 2: Local Development
@@ -134,13 +135,13 @@ docker-compose up -d postgres redis
 
 ```
 medical-triage/
-├── backend/                    # Django backend
+├── backend/                    # Django backend (monolith)
 │   ├── api/                   # REST API endpoints
 │   │   ├── views.py          # Patient, Session, Prediction views
 │   │   ├── auth_views.py     # JWT auth views
 │   │   └── urls.py           # API routing
 │   ├── agent/                 # AI agent + WebSocket handlers
-│   │   ├── langchain_agent.py # LangChain agent with 5 tools
+│   │   ├── langchain_agent.py # LangChain agent with tools
 │   │   ├── consumers.py      # WebSocket consumers
 │   │   └── tools.py          # Custom agent tools
 │   ├── ml_pipeline/           # ML model training + prediction
@@ -149,7 +150,7 @@ medical-triage/
 │   │   └── mlflow_tracking.py # MLflow integration
 │   ├── core/                  # Shared utilities
 │   │   └── models.py         # Django models
-│   ├── kafka/                 # Kafka producers/consumers
+│   ├── data/                  # Training datasets
 │   ├── backend/               # Django settings
 │   └── manage.py
 │
@@ -166,27 +167,13 @@ medical-triage/
 │   │   └── components/       # Reusable components
 │   └── package.json
 │
-├── services/                   # Microservices (Phase 2+)
-│   ├── auth-service/          # Authentication service
-│   ├── patient-service/       # Patient management
-│   ├── triage-service/        # Triage session service
-│   ├── inference-service/     # ML inference service
-│   └── agent-service/         # LangChain agent service
-│
 ├── docker/                     # Docker configuration
 │   ├── docker-compose.yml     # All services orchestration
 │   ├── Dockerfile.backend     # Backend container
 │   ├── Dockerfile.frontend    # Frontend container
-│   ├── kong/                  # API Gateway config
 │   ├── mlflow/                # MLflow tracking server
-│   └── nginx/                 # Nginx fallback config
-│
-├── protos/                     # Protocol Buffer definitions
-│   ├── auth.proto
-│   ├── patient.proto
-│   ├── triage.proto
-│   ├── inference.proto
-│   └── agent.proto
+│   ├── prometheus/            # Prometheus metrics
+│   └── grafana/               # Grafana dashboards
 │
 ├── docs/                       # Documentation
 │   ├── superpowers/
@@ -199,6 +186,12 @@ medical-triage/
     ├── ROADMAP.md             # Phase roadmap
     └── STATE.md               # Current project state
 ```
+
+**Removed in cleanup:**
+- `services/` - gRPC microservices (disabled, using monolithic Django)
+- `protos/` - Protocol Buffer definitions (gRPC disabled)
+- `kubernetes/`, `k8s/` - K8s manifests (not actively used)
+- `docker/kafka/`, `docker/kong/` - Disabled services
 
 ---
 
@@ -236,15 +229,6 @@ medical-triage/
 | GET | `/api/predictions/` | List predictions |
 | POST | `/api/predictions/` | Create prediction |
 
-### Inference Service (gRPC + HTTP)
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/inference/predict` | Get ML prediction |
-| POST | `/inference/batch` | Batch predictions |
-| GET | `/inference/model/status` | Model health check |
-| gRPC | `:50053` | gRPC inference service |
-
 ### WebSocket
 
 | Endpoint | Description |
@@ -265,12 +249,20 @@ medical-triage/
 ### Model Details
 
 - **Algorithm:** XGBoost Classifier
-- **Training Data:** Disease_symptom_and_patient_profile_dataset.csv
+- **Training Data:** DiseaseAndSymptoms.csv
 - **Classes:** 41 diseases
 - **Features:** 131 symptoms
 - **Performance:**
   - Accuracy: 88.5%
   - F1 Score: 86.7% (weighted)
+
+### MLflow Integration
+
+✅ **Active** - Model is registered in MLflow as `health-triage-classifier` v1
+
+- Model artifacts stored in MLflow registry
+- Experiment tracking enabled
+- Access the MLflow UI at http://localhost:5000
 
 ### Supported Diseases (Sample)
 
@@ -325,12 +317,11 @@ medical-triage/
 |------------|---------|---------|
 | PostgreSQL | 16 | Primary database |
 | Redis | 7 | Cache + message broker |
-| Apache Kafka | 7.5 | Event streaming |
 | MLflow | 2.10+ | ML lifecycle management |
-| Kong | 3.5 | API Gateway |
 | Prometheus | - | Metrics collection |
 | Grafana | - | Dashboards |
 | Jaeger | - | Distributed tracing |
+| Loki | - | Log aggregation |
 
 ### DevOps
 
@@ -338,7 +329,6 @@ medical-triage/
 |------------|---------|
 | Docker | Containerization |
 | Docker Compose | Local orchestration |
-| Kubernetes | Production orchestration |
 | GitHub Actions | CI/CD |
 | Nginx | Reverse proxy |
 
@@ -347,22 +337,21 @@ medical-triage/
 ## 📊 Screenshots
 
 ### Login Page
-![Login](docs/screenshots/login.png)
+![Login](image.png)
 
 ### Dashboard
-![Dashboard](docs/screenshots/dashboard.png)
+![Dashboard](image-1.png)
 
 ### AI Chat
-![Chat](docs/screenshots/chat.png)
+![Chat](image-2.png)
+![Chat](image-3.png)
 
 ### Health History
-![History](docs/screenshots/history.png)
+![History](image-4.png)
 
 ### MLflow UI
-![MLflow](docs/screenshots/mlflow.png)
+![MLflow](image-5.png)
 
-### Grafana Dashboard
-![Grafana](docs/screenshots/grafana.png)
 
 ---
 
@@ -376,9 +365,6 @@ python manage.py test
 # Frontend tests
 cd frontend
 npm test
-
-# Load testing (k6)
-k6 run scripts/load_test.js
 
 # Integration tests
 pytest backend/api/tests/ -v
@@ -424,7 +410,7 @@ http://localhost:16686
 
 - **JWT Authentication** - Secure token-based auth
 - **HTTPS/TLS** - Encrypted communication
-- **Rate Limiting** - DDoS protection via Kong
+- **Rate Limiting** - DDoS protection (Nginx)
 - **CORS** - Cross-origin request control
 - **Input Validation** - Pydantic schemas
 - **Audit Logging** - All actions logged for compliance
@@ -440,19 +426,6 @@ cd docker
 docker-compose up -d
 ```
 
-### Production (Kubernetes)
-
-```bash
-# Apply Kubernetes manifests
-kubectl apply -f k8s/
-
-# Check deployment
-kubectl get pods -l app=medical-triage
-
-# View logs
-kubectl logs -f deployment/medical-triage-backend
-```
-
 ### Environment Variables
 
 | Variable | Description | Default |
@@ -465,17 +438,6 @@ kubectl logs -f deployment/medical-triage-backend
 | `REDIS_URL` | Redis connection URL | `redis://localhost:6379/0` |
 | `GOOGLE_API_KEY` | Gemini API key | (required) |
 | `MLFLOW_TRACKING_URI` | MLflow server URL | `http://localhost:5000` |
-
----
-
-## 📚 Documentation
-
-| Document | Description |
-|----------|-------------|
-| [API Docs](http://localhost:8000/api/docs/) | Swagger/OpenAPI documentation |
-| [Architecture Spec](docs/superpowers/specs/2026-03-29-distributed-ml-scale-design.md) | System architecture |
-| [Implementation Plans](docs/superpowers/plans/) | Phase-by-phase implementation |
-| [Project Roadmap](.planning/ROADMAP.md) | Development roadmap |
 
 ---
 
@@ -514,32 +476,21 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👥 Authors
 
-- **Your Name** - *Initial work* - [yourhandle](https://github.com/yourhandle)
+- **Siddharth Solanki** - *Initial work* - [yourhandle](https://github.com/sidddha2004)
 
 ---
 
 ## 🙏 Acknowledgments
 
-- Dataset: Disease_symptom_and_patient_profile_dataset.csv
+- Dataset: DiseaseAndSymptoms.csv
 - Gemini API by Google
 - XGBoost library
 - Django and React communities
 
----
 
-## 📞 Support
-
-- **Issues:** [GitHub Issues](https://github.com/yourusername/medical-triage/issues)
-- **Email:** your.email@example.com
-- **Documentation:** [Wiki](https://github.com/yourusername/medical-triage/wiki)
-
----
 
 <div align="center">
 
-**⭐ If you like this project, please give it a star!**
 
-[![Stars](https://img.shields.io/github/stars/yourusername/medical-triage?style=social)](https://github.com/yourusername/medical-triage/stargazers)
-[![Forks](https://img.shields.io/github/forks/yourusername/medical-triage?style=social)](https://github.com/yourusername/medical-triage/network/members)
 
 </div>

@@ -36,25 +36,28 @@ services:
       context: ../backend
       dockerfile: ../docker/Dockerfile.backend
     container_name: medical_triage_backend
-    volumes:
-      - ../backend:/app
     ports:
       - "8000:8000"
     environment:
       - DB_NAME=medical_triage
       - DB_USER=postgres
       - DB_PASSWORD=postgres
-      - DB_HOST=postgres
+      - DB_HOST=host.docker.internal
       - DB_PORT=5432
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_URL=redis://host.docker.internal:6379/0
       - SECRET_KEY=django-insecure-dev-key-for-docker
       - DEBUG=True
       - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+      - MLFLOW_TRACKING_URI=http://host.docker.internal:5000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      - medical_triage_network
     command: >
       sh -c "python manage.py migrate &&
              python manage.py runserver 0.0.0.0:8000"
@@ -64,21 +67,23 @@ services:
       context: ../backend
       dockerfile: ../docker/Dockerfile.backend
     container_name: medical_triage_celery
-    volumes:
-      - ../backend:/app
     environment:
       - DJANGO_SETTINGS_MODULE=backend.settings
       - DB_NAME=medical_triage
       - DB_USER=postgres
       - DB_PASSWORD=postgres
-      - DB_HOST=postgres
+      - DB_HOST=host.docker.internal
       - DB_PORT=5432
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_URL=redis://host.docker.internal:6379/0
       - SECRET_KEY=django-insecure-dev-key-for-docker
       - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - redis
       - postgres
+    networks:
+      - medical_triage_network
     command: celery -A backend worker --loglevel=info
 
   frontend:
@@ -111,33 +116,6 @@ services:
     networks:
       - medical_triage_network
     restart: unless-stopped
-
-  # Inference Service (FastAPI + gRPC) - DISABLED until models are trained
-  # Run python backend/manage.py train_model first to generate models
-  # inference-service:
-  #   build:
-  #     context: ../services/inference-service
-  #     dockerfile: Dockerfile
-  #   container_name: medical_triage_inference
-  #   ports:
-  #     - "8004:8004"
-  #     - "50053:50053"
-  #   environment:
-  #     - MLFLOW_TRACKING_URI=http://mlflow:5000
-  #     - REDIS_HOST=redis
-  #     - REDIS_PORT=6379
-  #     - AB_TEST_ENABLED=true
-  #     - AB_TEST_CHAMPION_VERSION=v1.0
-  #     - AB_TEST_CHALLENGER_VERSION=v2.0
-  #     - AB_TEST_CHALLENGER_TRAFFIC=10
-  #   volumes:
-  #     - ../backend/ml_pipeline/models:/app/models
-  #   depends_on:
-  #     - mlflow
-  #     - redis
-  #   networks:
-  #     - medical_triage_network
-  #   restart: unless-stopped
 
   # Prometheus
   prometheus:
@@ -194,177 +172,12 @@ services:
     container_name: medical_triage_loki
     ports:
       - "3100:3100"
+    volumes:
+      - loki_data:/loki
     command: -config.file=/etc/loki/local-config.yaml
     networks:
       - medical_triage_network
     restart: unless-stopped
-
-  # Kong API Gateway - DISABLED (image not available in all regions)
-  # To enable, update dockerfile and pull kong image
-  # kong:
-  #   build:
-  #     context: ./kong
-  #     dockerfile: Dockerfile
-  #   container_name: medical_triage_kong
-  #   ports:
-  #     - "8000:8000"
-  #     - "8443:8443"
-  #     - "8001:8001"
-  #   environment:
-  #     KONG_DATABASE: "off"
-  #     KONG_DECLARATIVE_CONFIG: /kong/kong.yml
-  #   depends_on:
-  #     - redis
-  #     - backend
-  #   networks:
-  #     - medical_triage_network
-  #   restart: unless-stopped
-
-  # Zookeeper
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.5.0
-    container_name: medical_triage_zookeeper
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    ports:
-      - "2181:2181"
-    networks:
-      - medical_triage_network
-    healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "2181"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Kafka Broker
-  kafka:
-    image: confluentinc/cp-kafka:7.5.0
-    container_name: medical_triage_kafka
-    depends_on:
-      zookeeper:
-        condition: service_healthy
-    ports:
-      - "9092:9092"
-      - "9093:9093"
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-      KAFKA_NUM_PARTITIONS: 3
-    volumes:
-      - kafka_data:/var/lib/kafka/data
-    networks:
-      - medical_triage_network
-    healthcheck:
-      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Kafka UI
-  kafka-ui:
-    image: provectuslabs/kafka-ui:latest
-    container_name: medical_triage_kafka_ui
-    depends_on:
-      - kafka
-      - zookeeper
-    ports:
-      - "8090:8080"
-    environment:
-      KAFKA_CLUSTERS_0_NAME: medical-triage
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
-      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
-    networks:
-      - medical_triage_network
-
-  # ===========================================
-  # gRPC Microservices (Plan 2: Service Decomposition)
-  # NOTE: These services require Django core models and additional setup
-  # To enable: copy backend/core to each service directory and uncomment
-  # ===========================================
-
-  # # Auth Service (gRPC)
-  # auth-service:
-  #   build:
-  #     context: ../services/auth-service
-  #     dockerfile: Dockerfile
-  #   container_name: medical_triage_auth
-  #   ports:
-  #     - "50051:50051"
-  #   environment:
-  #     - DB_NAME=medical_triage
-  #     - DB_USER=postgres
-  #     - DB_PASSWORD=postgres
-  #     - DB_HOST=postgres
-  #     - SECRET_KEY=django-insecure-auth-service-key
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   networks:
-  #     - medical_triage_network
-  #   restart: unless-stopped
-
-  # # Patient Service (gRPC) - requires backend/core/models
-  # patient-service:
-  #   build:
-  #     context: ../services/patient-service
-  #     dockerfile: Dockerfile
-  #   container_name: medical_triage_patient
-  #   ports:
-  #     - "50052:50052"
-  #   environment:
-  #     - DB_NAME=medical_triage
-  #     - DB_USER=postgres
-  #     - DB_PASSWORD=postgres
-  #     - DB_HOST=postgres
-  #     - SECRET_KEY=django-insecure-patient-service-key
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   networks:
-  #     - medical_triage_network
-  #   restart: unless-stopped
-
-  # # Triage Service (gRPC) - requires backend/core/models
-  # triage-service:
-  #   build:
-  #     context: ../services/triage-service
-  #     dockerfile: Dockerfile
-  #   container_name: medical_triage_triage
-  #   ports:
-  #     - "50054:50054"
-  #   environment:
-  #     - DB_NAME=medical_triage
-  #     - DB_USER=postgres
-  #     - DB_PASSWORD=postgres
-  #     - DB_HOST=postgres
-  #     - SECRET_KEY=django-insecure-triage-service-key
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   networks:
-  #     - medical_triage_network
-  #   restart: unless-stopped
-
-  # # Agent Service (gRPC)
-  # agent-service:
-  #   build:
-  #     context: ../services/agent-service
-  #     dockerfile: Dockerfile
-  #   container_name: medical_triage_agent
-  #   ports:
-  #     - "50055:50055"
-  #   environment:
-  #     - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
-  #   networks:
-  #     - medical_triage_network
-  #   restart: unless-stopped
 
 volumes:
   postgres_data:
@@ -372,7 +185,7 @@ volumes:
   mlflow_data:
   prometheus_data:
   grafana_data:
-  kafka_data:
+  loki_data:
 
 networks:
   medical_triage_network:

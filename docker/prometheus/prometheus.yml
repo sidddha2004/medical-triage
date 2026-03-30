@@ -31,37 +31,16 @@ scrape_configs:
         labels:
           service: 'backend'
 
-  # Inference Service
-  - job_name: 'inference-service'
-    static_configs:
-      - targets: ['inference-service:8004']
-        labels:
-          service: 'inference'
-
-  # Redis Exporter
-  - job_name: 'redis'
-    static_configs:
-      - targets: ['redis-exporter:9121']
-        labels:
-          service: 'redis'
-
-  # PostgreSQL Exporter
-  - job_name: 'postgres'
-    static_configs:
-      - targets: ['postgres-exporter:9187']
-        labels:
-          service: 'postgres'
-
-  # Kafka Exporter
-  - job_name: 'kafka'
-    static_configs:
-      - targets: ['kafka-exporter:9308']
-        labels:
-          service: 'kafka'
-
   # MLflow
   - job_name: 'mlflow'
     static_configs:
       - targets: ['mlflow:5000']
         labels:
           service: 'mlflow'
+
+  # Grafana
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
+        labels:
+          service: 'grafana'

@@ -12,6 +12,7 @@ import pandas as pd
 import xgboost as xgb
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, f1_score, classification_report
+from sklearn.preprocessing import LabelEncoder
 import logging
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -22,19 +23,26 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def load_data(data_path: str = 'data/Disease_symptom_and_patient_profile_dataset.csv'):
+def load_data(data_path: str = 'data/DiseaseAndSymptoms.csv'):
     logger.info(f'Loading data from {data_path}')
     df = pd.read_csv(data_path)
     symptom_columns = [col for col in df.columns if col.startswith('Symptom_')]
-    X = df[symptom_columns]
+
+    # Convert symptom strings to binary (1 if present, 0 if empty/NaN)
+    X = df[symptom_columns].notna() & (df[symptom_columns] != '')
+    X = X.astype(int)
     y = df['Disease']
     logger.info(f'Data shape: {X.shape}, Classes: {y.nunique()}')
-    return X, y
+    return X, y, symptom_columns
 
 
-def train_model(X, y, params: dict = None):
+def train_model(X, y, symptom_columns, params: dict = None):
+    # Encode string labels to integers
+    label_encoder = LabelEncoder()
+    y_encoded = label_encoder.fit_transform(y)
+
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y
+        X, y_encoded, test_size=0.2, random_state=42, stratify=y_encoded
     )
     logger.info(f'Train: {len(X_train)}, Test: {len(X_test)}')
 
@@ -46,7 +54,6 @@ def train_model(X, y, params: dict = None):
             'subsample': 0.8,
             'colsample_bytree': 0.8,
             'random_state': 42,
-            'use_label_encoder': False,
             'eval_metric': 'mlogloss'
         }
 
@@ -60,6 +67,11 @@ def train_model(X, y, params: dict = None):
     logger.info(f'Accuracy: {accuracy:.4f}, F1: {f1:.4f}')
     logger.info(f'\n{classification_report(y_test, y_pred)}')
 
+    # Save encoder with model
+    import joblib
+    os.makedirs('models', exist_ok=True)
+    joblib.dump(label_encoder, 'models/encoder.joblib')
+
     return model, {
         'accuracy': accuracy,
         'f1_score': f1,
@@ -70,8 +82,8 @@ def train_model(X, y, params: dict = None):
 def main():
     logger.info('Starting training with MLflow tracking')
 
-    data_path = os.getenv('DATA_PATH', 'data/Disease_symptom_and_patient_profile_dataset.csv')
-    X, y = load_data(data_path)
+    data_path = os.getenv('DATA_PATH', 'data/DiseaseAndSymptoms.csv')
+    X, y, symptom_columns = load_data(data_path)
 
     params = {
         'n_estimators': int(os.getenv('N_ESTIMATORS', '100')),
@@ -79,7 +91,7 @@ def main():
         'learning_rate': float(os.getenv('LEARNING_RATE', '0.1')),
     }
 
-    model, metrics = train_model(X, y, params)
+    model, metrics = train_model(X, y, symptom_columns, params)
 
     run_id = log_training_run(
         model=model,
