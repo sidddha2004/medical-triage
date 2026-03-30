@@ -7,7 +7,7 @@
 
 An AI-powered health triage system that combines machine learning with conversational AI to provide accurate symptom assessments and personalized triage recommendations.
 
-![Health Triage Dashboard](docs/screenshots/dashboard.png)
+![Health Triage Dashboard](images/image.png)
 
 ---
 
@@ -337,20 +337,20 @@ medical-triage/
 ## 📊 Screenshots
 
 ### Login Page
-![Login](image.png)
+![Login](images/image.png)
 
 ### Dashboard
-![Dashboard](image-1.png)
+![Dashboard](images/image-1.png)
 
 ### AI Chat
-![Chat](image-2.png)
-![Chat](image-3.png)
+![Chat](images/image-2.png)
+![Chat](images/image-3.png)
 
 ### Health History
-![History](image-4.png)
+![History](images/image-4.png)
 
 ### MLflow UI
-![MLflow](image-5.png)
+![MLflow](images/image-5.png)
 
 
 ---
