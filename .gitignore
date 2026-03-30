@@ -7,7 +7,11 @@ frontend/.env
 frontend/.env.local
 
 # Docker
+docker/.env
 docker/docker-compose.override.yml
+
+# Kubernetes secrets
+kubernetes/secrets.yaml
 
 # IDE
 .vscode/

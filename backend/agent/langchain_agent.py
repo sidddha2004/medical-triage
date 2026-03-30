@@ -183,15 +183,24 @@ def trigger_escalation_alert(
         Dictionary with alert status
     """
     # In production, this would send to monitoring system
-    session = TriageSession.objects.get(id=session_id)
-    session.status = 'escalated'
-    session.save()
-
-    return {
-        'alert_sent': True,
-        'session_id': session_id,
-        'escalation_level': triage_level
-    }
+    try:
+        session = TriageSession.objects.get(id=session_id)
+        session.status = 'escalated'
+        session.save()
+        return {
+            'alert_sent': True,
+            'session_id': session_id,
+            'escalation_level': triage_level
+        }
+    except TriageSession.DoesNotExist:
+        # Session doesn't exist yet - this can happen on first message
+        # Log the escalation request but don't fail
+        print(f"Escalation alert requested for non-existent session {session_id}")
+        return {
+            'alert_sent': False,
+            'error': f'Session {session_id} not found',
+            'escalation_level': triage_level
+        }
 
 
 class TriageAgent:
@@ -286,7 +295,9 @@ Always include a medical disclaimer in your final report."""
             self.initialize()
 
         # Build conversation context with system prompt
-        messages = [SystemMessage(content=self.system_prompt)]
+        # Include session_id in system prompt so agent knows it
+        session_context = f"Current session ID: {session_id}" if session_id else "No session ID (first message in conversation)"
+        messages = [SystemMessage(content=f"{self.system_prompt}\n\n{session_context}")]
 
         # Add conversation history if available
         if conversation_history:
@@ -299,8 +310,8 @@ Always include a medical disclaimer in your final report."""
         # Add current message
         messages.append(HumanMessage(content=message))
 
-        # Invoke the agent
-        response = self.agent.invoke({"messages": messages})
+        # Invoke the agent with session_id in state for tools to access
+        response = self.agent.invoke({"messages": messages, "session_id": session_id})
 
         # Extract the response
         if "messages" in response:
