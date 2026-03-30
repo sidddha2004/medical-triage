@@ -1,7 +1,0 @@
-# Kubernetes Namespace for Medical Triage
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: medical-triage
-  labels:
-    name: medical-triage
