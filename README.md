@@ -472,11 +472,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 👥 Authors
-
-- **Siddharth Solanki** - *Initial work* - [yourhandle](https://github.com/sidddha2004)
-
----
 
 ## 🙏 Acknowledgments
 
